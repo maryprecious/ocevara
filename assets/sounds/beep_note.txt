@@ -1,0 +1,22 @@
+BEEP AUDIO ASSET - DEMO FALLBACK
+
+This directory contains audio assets for the emergency alert overlay.
+
+To add actual beep sound, please provide or generate a short beep audio file (MP3 or WAV):
+  File: beep.mp3
+  Duration: 100-200ms short beep
+  Format: MP3 or WAV
+  Purpose: Looping alert sound for emergency zones
+
+For demo/testing:
+  - The app will gracefully handle missing beep.mp3 (audio won't play, but alert shows)
+  - Vibration and visual pulse will still work on supported devices
+  - On web, audio is skipped by setting (autoplay policy)
+
+To create a demo beep file:
+  1. Use an audio editor (Audacity, etc.) to generate a 100ms beep at 800-1000Hz
+  2. Export as MP3 and place as: assets/sounds/beep.mp3
+  3. Run: flutter pub get
+  4. Rebuild and test on device
+
+Note: The asset is declared in pubspec.yaml so the app will not warn about missing files.
