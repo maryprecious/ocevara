@@ -1,22 +1,6 @@
-#!/bin/bash
-set -e  # Stop immediately if any command fails
-
-echo "Cloning Flutter stable..."
-git clone https://github.com/flutter/flutter.git -b stable
-
-echo "Adding Flutter to PATH..."
-export PATH="$PATH:$PWD/flutter/bin"
-
-echo "Enabling web support..."
-flutter config --enable-web
-
-echo "Going into the view folder..."
-cd view
-
-echo "Getting dependencies..."
-flutter pub get
-
-echo "Building Flutter Web release..."
-flutter build web --release
-
-echo "Flutter Web build complete!"
+!/bin/bash 
+1. Download the stable version of Flutter git clone https://github.com/flutter/flutter.git -b stable
+ 
+2. Add Flutter to the PATH export PATH="$PATH:`pwd`/flutter/bin"
+ 
+3. Enable web, get packages, and build the app! flutter config --enable-web flutter pub get flutter build web --release
