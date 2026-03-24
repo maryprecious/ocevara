@@ -94,11 +94,16 @@ class _AddCatchFormState extends ConsumerState<AddCatchForm> {
       Position? position;
       try {
         position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 5),
+          desiredAccuracy: LocationAccuracy.best,
+          timeLimit: const Duration(seconds: 15),
         );
       } catch (e) {
-        debugPrint('Error getting location: $e');
+        debugPrint('Error getting current location, trying last known: $e');
+        try {
+          position = await Geolocator.getLastKnownPosition();
+        } catch (e2) {
+          debugPrint('Error getting last known location: $e2');
+        }
       }
 
       // 2. Get User ID
@@ -130,8 +135,9 @@ class _AddCatchFormState extends ConsumerState<AddCatchForm> {
       final qty = double.tryParse(_quantityCtrl.text.trim()) ?? 0.0;
       final weight = double.tryParse(_weightCtrl.text.trim());
 
+      final now = DateTime.now();
       final log = CatchLog(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: now.millisecondsSinceEpoch.toString(),
         userId: user.id,
         speciesId: _selectedSpecies ?? 'unknown', // Using species name as ID for distinct grouping
         speciesName: _selectedSpecies,
@@ -140,10 +146,12 @@ class _AddCatchFormState extends ConsumerState<AddCatchForm> {
         unit: 'count', // Default
         lat: position?.latitude ?? 0.0,
         lng: position?.longitude ?? 0.0,
-        date: DateTime.now(),
+        date: now,
         imagePath: savedImagePath,
         synced: false,
         metadata: _locationCtrl.text.isNotEmpty ? {'location_text': _locationCtrl.text} : null,
+        displayDate: '${now.day}/${now.month}/${now.year}',
+        displayTime: '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
       );
 
       await ref.read(catchLogServiceProvider.notifier).addLog(log);

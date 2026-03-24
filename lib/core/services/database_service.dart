@@ -61,7 +61,7 @@ class DatabaseService {
     final path = join(dbPath, fileName);
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await _createCatchesTable(db);
         await _createZonesTable(db);
@@ -79,6 +79,16 @@ class DatabaseService {
             await db.execute('ALTER TABLE catches ADD COLUMN species_name TEXT');
           } catch (e) {
             debugPrint('Error adding species_name column: $e');
+          }
+        }
+        if (oldVersion < 5) {
+          try {
+            await db.execute('ALTER TABLE catches ADD COLUMN created_at TEXT');
+            await db.execute('ALTER TABLE catches ADD COLUMN displayDate TEXT');
+            await db.execute('ALTER TABLE catches ADD COLUMN displayTime TEXT');
+            await db.execute('ALTER TABLE catches ADD COLUMN displayTimestamp TEXT');
+          } catch (e) {
+            debugPrint('Error migrating to v5: $e');
           }
         }
       },
@@ -100,7 +110,11 @@ CREATE TABLE catches (
   date TEXT NOT NULL,
   image_path TEXT,
   synced INTEGER NOT NULL,
-  metadata TEXT
+  metadata TEXT,
+  created_at TEXT,
+  displayDate TEXT,
+  displayTime TEXT,
+  displayTimestamp TEXT
 )''');
   }
 
@@ -135,8 +149,40 @@ CREATE TABLE zones (
       json['metadata'] = jsonEncode(json['metadata']);
     }
 
-    await db.insert('catches', json,
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    try {
+      await db.insert('catches', json,
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    } catch (e) {
+      if (e.toString().contains('no column named created_at')) {
+        debugPrint('OCE_DB: Missing column detected during insert, attempting fix...');
+        await _ensureV5Columns(db);
+        // Retry once
+        await db.insert('catches', json,
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> _ensureV5Columns(Database db) async {
+    final columns = [
+      'created_at',
+      'displayDate',
+      'displayTime',
+      'displayTimestamp',
+    ];
+    for (final col in columns) {
+      try {
+        await db.execute('ALTER TABLE catches ADD COLUMN $col TEXT');
+        debugPrint('OCE_DB: Added column $col');
+      } catch (e) {
+        // Probably already exists
+        if (!e.toString().contains('duplicate column name')) {
+          debugPrint('OCE_DB: Error adding column $col: $e');
+        }
+      }
+    }
   }
 
   Future<List<CatchLog>> getAllCatches(String userId) async {

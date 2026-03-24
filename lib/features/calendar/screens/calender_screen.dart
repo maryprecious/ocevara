@@ -237,6 +237,11 @@ class _FishingCalendarScreenState extends ConsumerState<FishingCalendarScreen> {
                               int dayNum = index - firstDay + 1;
                               bool isSelected = _selectedDay == dayNum;
                               
+                              final now = DateTime.now();
+                              bool isToday = now.day == dayNum && 
+                                             now.month == _focusedMonth.month && 
+                                             now.year == _focusedMonth.year;
+                              
                               // Get status from real data
                               String riskLevel = 'low';
                               if (dayNum <= calendarState.days.length) {
@@ -252,13 +257,29 @@ class _FishingCalendarScreenState extends ConsumerState<FishingCalendarScreen> {
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AppColors.getCardBackground(context) : AppColors.getCardBackground(context).withOpacity(0.4),
+                                    color: isSelected 
+                                        ? AppColors.getCardBackground(context) 
+                                        : (isToday ? teal.withOpacity(0.3) : AppColors.getCardBackground(context).withOpacity(0.4)),
                                     borderRadius: BorderRadius.circular(12),
-                                    border: isSelected ? Border.all(color: navy, width: 2) : null,
+                                    border: isSelected 
+                                        ? Border.all(color: navy, width: 2) 
+                                        : (isToday ? Border.all(color: teal, width: 2) : null),
                                   ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      if (isToday && !isSelected)
+                                        Padding(
+                                          padding: const EdgeInsets.only(bottom: 1),
+                                          child: Text(
+                                            'TODAY',
+                                            style: GoogleFonts.lato(
+                                              fontSize: 6,
+                                              fontWeight: FontWeight.bold,
+                                              color: navy,
+                                            ),
+                                          ),
+                                        ),
                                       if (isSelected)
                                         Align(
                                           alignment: Alignment.topRight,
@@ -272,11 +293,11 @@ class _FishingCalendarScreenState extends ConsumerState<FishingCalendarScreen> {
                                         style: GoogleFonts.lato(
                                           color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 14,
+                                          fontSize: 13,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
-                                      CircleAvatar(radius: 3, backgroundColor: dotColor),
+                                      const SizedBox(height: 1),
+                                      CircleAvatar(radius: 2, backgroundColor: dotColor),
                                     ],
                                   ),
                                 ),

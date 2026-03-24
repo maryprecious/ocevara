@@ -22,6 +22,12 @@ CatchLog _$CatchLogFromJson(Map<String, dynamic> json) => CatchLog(
       ? false
       : const BoolConverter().fromJson((json['synced'] as num).toInt()),
   metadata: json['metadata'] as Map<String, dynamic>?,
+  createdAt: json['created_at'] == null
+      ? null
+      : DateTime.parse(json['created_at'] as String),
+  displayDate: json['displayDate'] as String?,
+  displayTime: json['displayTime'] as String?,
+  displayTimestamp: json['displayTimestamp'] as String?,
 );
 
 Map<String, dynamic> _$CatchLogToJson(CatchLog instance) => <String, dynamic>{
@@ -38,4 +44,8 @@ Map<String, dynamic> _$CatchLogToJson(CatchLog instance) => <String, dynamic>{
   'image_path': instance.imagePath,
   'synced': const BoolConverter().toJson(instance.synced),
   'metadata': instance.metadata,
+  'created_at': instance.createdAt?.toIso8601String(),
+  'displayDate': instance.displayDate,
+  'displayTime': instance.displayTime,
+  'displayTimestamp': instance.displayTimestamp,
 };

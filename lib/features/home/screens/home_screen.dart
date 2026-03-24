@@ -151,11 +151,11 @@ class _HomeContentState extends ConsumerState<_HomeContent>
   void initState() {
     super.initState();
     _removeListener = _service.addListener((state) => _onChange());
-    // Blinking animation for the emergency button
+    // Blinking animation for the emergency button - starts stopped
     _blinkCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
-    )..repeat(reverse: true);
+    );
   }
 
   bool _isOnline = true; // app-level online indicator (toggleable)
@@ -174,6 +174,26 @@ class _HomeContentState extends ConsumerState<_HomeContent>
     final user = ref.watch(userProvider);
     final themeMode = ref.watch(themeModeProvider);
     final isDark = themeMode == ThemeMode.dark;
+
+    // Monitor danger status to control blinking
+    final calendarState = ref.watch(calendarViewModelProvider);
+    bool isDanger = false;
+    final today = DateTime.now();
+    if (calendarState.days.isNotEmpty && today.day <= calendarState.days.length) {
+      final day = calendarState.days[today.day - 1];
+      isDanger = day.riskLevel == 'high' || day.riskLevel == 'critical';
+    }
+
+    // Side effect: update animation state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        if (isDanger) {
+          if (!_blinkCtrl.isAnimating) _blinkCtrl.repeat(reverse: true);
+        } else {
+          if (_blinkCtrl.isAnimating) _blinkCtrl.stop();
+        }
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.getScaffoldBackground(context),

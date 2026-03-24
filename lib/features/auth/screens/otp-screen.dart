@@ -238,6 +238,16 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please enter this code 000000 for demo until otp service is paid for.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.lato(
+                      fontSize: 16,
+                      color: Colors.red,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
                   Text(
                     widget.identifier,
                     textAlign: TextAlign.center,

@@ -29,8 +29,8 @@ class MapViewModel extends StateNotifier<MapState> {
       await _loadInitialData();
       try {
         final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 10),
+          desiredAccuracy: LocationAccuracy.best,
+          timeLimit: const Duration(seconds: 20),
         );
         print(
           'OCE_MAP: Initial position obtained: ${position.latitude}, ${position.longitude}',
@@ -40,8 +40,18 @@ class MapViewModel extends StateNotifier<MapState> {
           position.heading,
         );
       } catch (e) {
-        print('OCE_MAP: Initial fetch failed/timed out: $e');
-        // Fallback to stream if direct fetch fails
+        print('OCE_MAP: Initial fetch failed/timed out, trying last known: $e');
+        try {
+          final lastKnown = await Geolocator.getLastKnownPosition();
+          if (lastKnown != null) {
+            _updateLocation(
+              LatLng(lastKnown.latitude, lastKnown.longitude),
+              lastKnown.heading,
+            );
+          }
+        } catch (e2) {
+          print('OCE_MAP: Last known fetch failed: $e2');
+        }
       }
       _startLocationUpdates();
     } else {
@@ -84,8 +94,8 @@ class MapViewModel extends StateNotifier<MapState> {
     _positionSubscription =
         Geolocator.getPositionStream(
           locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 10,
+            accuracy: LocationAccuracy.best,
+            distanceFilter: 5,
           ),
         ).listen((Position position) {
           final userLoc = LatLng(position.latitude, position.longitude);

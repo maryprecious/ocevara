@@ -27,6 +27,12 @@ class CatchLog {
 
   final Map<String, dynamic>? metadata;
 
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
+  final String? displayDate;
+  final String? displayTime;
+  final String? displayTimestamp;
+
   CatchLog({
     required this.id,
     required this.userId,
@@ -41,6 +47,10 @@ class CatchLog {
     this.imagePath,
     this.synced = false,
     this.metadata,
+    this.createdAt,
+    this.displayDate,
+    this.displayTime,
+    this.displayTimestamp,
   });
 
   factory CatchLog.fromJson(Map<String, dynamic> json) => _$CatchLogFromJson(json);
@@ -60,6 +70,10 @@ class CatchLog {
     String? imagePath,
     bool? synced,
     Map<String, dynamic>? metadata,
+    DateTime? createdAt,
+    String? displayDate,
+    String? displayTime,
+    String? displayTimestamp,
   }) {
     return CatchLog(
       id: id ?? this.id,
@@ -75,6 +89,10 @@ class CatchLog {
       imagePath: imagePath ?? this.imagePath,
       synced: synced ?? this.synced,
       metadata: metadata ?? this.metadata,
+      createdAt: createdAt ?? this.createdAt,
+      displayDate: displayDate ?? this.displayDate,
+      displayTime: displayTime ?? this.displayTime,
+      displayTimestamp: displayTimestamp ?? this.displayTimestamp,
     );
   }
 }

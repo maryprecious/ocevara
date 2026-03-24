@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ocevara/core/models/catch_log.dart';
+import 'package:ocevara/core/services/api_service.dart';
 import 'package:ocevara/core/services/database_service.dart';
 import 'package:ocevara/core/services/sync_service.dart';
 
@@ -36,6 +38,26 @@ class CatchLogService extends StateNotifier<List<CatchLog>> {
   Future<void> loadUserLogs(String userId) async {
     final logs = await DatabaseService.instance.getAllCatches(userId);
     state = logs;
+  }
+
+  Future<void> refreshLogsFromServer(String userId) async {
+    try {
+      final logsData = await _ref?.read(apiServiceProvider).get('/fish/users/$userId/catch-logs');
+      if (logsData != null && logsData.data != null) {
+        final List<dynamic> list = logsData.data['data'];
+        final List<CatchLog> remoteLogs = list.map((json) => CatchLog.fromJson(json)).toList();
+        
+        // Save remote logs to local DB (upsert)
+        for (final log in remoteLogs) {
+          await DatabaseService.instance.insertCatch(log.copyWith(synced: true));
+        }
+        
+        // Reload from local DB to maintain consistent state
+        await loadUserLogs(userId);
+      }
+    } catch (e) {
+      debugPrint('Error refreshing logs: $e');
+    }
   }
 
   Future<void> _loadLogs() async {

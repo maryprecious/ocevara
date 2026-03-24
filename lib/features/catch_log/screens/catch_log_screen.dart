@@ -12,6 +12,7 @@ import 'package:ocevara/features/ai_camera/screens/ai_camera_screen.dart';
 import 'package:ocevara/core/services/auth_service.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ocevara/core/models/catch_log.dart';
 import 'package:ocevara/features/catch_log/services/catch_log_service.dart';
 
 class CatchLogScreen extends ConsumerStatefulWidget {
@@ -28,7 +29,12 @@ class _CatchLogScreenState extends ConsumerState<CatchLogScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = ref.read(userProvider);
       if (user != null) {
-        ref.read(catchLogServiceProvider.notifier).loadUserLogs(user.id);
+        final notifier = ref.read(catchLogServiceProvider.notifier);
+        notifier.loadUserLogs(user.id).then((_) {
+          if (ref.read(catchLogServiceProvider).isEmpty) {
+            notifier.refreshLogsFromServer(user.id);
+          }
+        });
       }
     });
   }
@@ -43,6 +49,22 @@ class _CatchLogScreenState extends ConsumerState<CatchLogScreen> {
     if (s.contains('salmon')) return '🐟';
     if (s.contains('mackerel')) return '🐟';
     return '🐟';
+  }
+
+  String _formatDate(CatchLog log) {
+    final now = DateTime.now();
+    final d = log.date;
+    
+    // Normalize dates to midnight for accurate day difference
+    final today = DateTime(now.year, now.month, now.day);
+    final catchDate = DateTime(d.year, d.month, d.day);
+    final diffDays = today.difference(catchDate).inDays;
+
+    if (diffDays == 0) return 'Today';
+    if (diffDays == 1) return 'Yesterday';
+    if (diffDays > 1 && diffDays <= 7) return '$diffDays days ago';
+    
+    return '${d.day}/${d.month}/${d.year}';
   }
 
   void _openAddForm() {
@@ -83,8 +105,16 @@ class _CatchLogScreenState extends ConsumerState<CatchLogScreen> {
         ],
       ),
       // remove floating button to keep primary action inside the page
-      body: SingleChildScrollView(
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          final user = ref.read(userProvider);
+          if (user != null) {
+            await ref.read(catchLogServiceProvider.notifier).refreshLogsFromServer(user.id);
+          }
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           children: [
             // 1. Stats Row
             Padding(
@@ -351,10 +381,18 @@ class _CatchLogScreenState extends ConsumerState<CatchLogScreen> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '${log.date.hour.toString().padLeft(2, '0')}:${log.date.minute.toString().padLeft(2, '0')}',
+                              _formatDate(log),
                               style: GoogleFonts.lato(
                                 color: Colors.grey.shade500,
-                                fontSize: 12,
+                                fontSize: 10,
+                              ),
+                            ),
+                            Text(
+                              log.displayTime ?? '${log.date.hour.toString().padLeft(2, '0')}:${log.date.minute.toString().padLeft(2, '0')}',
+                              style: GoogleFonts.lato(
+                                color: Colors.grey.shade600,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -416,6 +454,7 @@ class _CatchLogScreenState extends ConsumerState<CatchLogScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

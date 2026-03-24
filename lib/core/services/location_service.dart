@@ -28,14 +28,21 @@ class LocationService {
           'Location permissions are permanently denied, we cannot request permissions.');
     } 
 
-    return await Geolocator.getCurrentPosition();
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.best,
+      timeLimit: const Duration(seconds: 15),
+    ).catchError((e) async {
+      debugPrint('LocationService: getCurrentPosition failed, trying last known: $e');
+      return await Geolocator.getLastKnownPosition() ?? 
+             Future.error('Location not available');
+    });
   }
 
   Stream<Position> getPositionStream() {
     return Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5,
       ),
     );
   }

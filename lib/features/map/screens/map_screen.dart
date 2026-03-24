@@ -103,13 +103,26 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
       }
     });
 
-    // Auto-center logic for initial load
+    // Listen for user location changes
+    ref.listen(mapViewModelProvider.select((s) => s.userLocation), (previous, next) {
+      if (next != null) {
+        // If this is the first time we get a location, center on it
+        if (previous == null && !_hasCenteredOnUser && widget.initialLat == null) {
+          _animateMapMove(next, mapState.currentZoom);
+          _hasCenteredOnUser = true;
+        } 
+        // If we are in "follow" mode, keep the map centered
+        else if (mapState.isFollowingUser) {
+          _mapController.move(next, _mapController.camera.zoom);
+        }
+      }
+    });
+
+    // Auto-center logic for initial load with widget params
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.initialLat != null && widget.initialLng != null && !_hasCenteredOnUser) {
         _animateMapMove(LatLng(widget.initialLat!, widget.initialLng!), 15);
         _hasCenteredOnUser = true;
-      } else if (mapState.isFollowingUser && mapState.userLocation != null) {
-        _mapController.move(mapState.userLocation!, mapState.currentZoom);
       }
     });
 
@@ -126,6 +139,10 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
               onPositionChanged: (pos, hasGesture) {
                 if (hasGesture && mapState.isFollowingUser) {
                   viewModel.toggleFollowUser();
+                }
+                // Sync zoom state if it changed via gesture
+                if (hasGesture && pos.zoom != mapState.currentZoom) {
+                  viewModel.updateZoom(pos.zoom!);
                 }
               },
               onTap: (tapPosition, point) {
@@ -600,18 +617,20 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                 Column(
                   children: [
                     _circularButton(Icons.add, () {
-                      viewModel.updateZoom(mapState.currentZoom + 1);
+                      final newZoom = mapState.currentZoom + 0.5;
+                      viewModel.updateZoom(newZoom);
                       _mapController.move(
                         _mapController.camera.center,
-                        mapState.currentZoom + 1,
+                        newZoom,
                       );
                     }),
                     const SizedBox(height: 8),
                     _circularButton(Icons.remove, () {
-                      viewModel.updateZoom(mapState.currentZoom - 1);
+                      final newZoom = mapState.currentZoom - 0.5;
+                      viewModel.updateZoom(newZoom);
                       _mapController.move(
                         _mapController.camera.center,
-                        mapState.currentZoom - 1,
+                        newZoom,
                       );
                     }),
                   ],
