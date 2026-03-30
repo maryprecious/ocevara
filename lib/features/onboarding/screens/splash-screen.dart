@@ -41,7 +41,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
 
     // Navigate to Onboarding or Home
-    Future.delayed(const Duration(seconds: 4), () async {
+    Future.delayed(const Duration(seconds: 2), () async {
       if (mounted) {
         final authService = ref.read(authServiceProvider);
         final user = await authService.getCurrentUser();
