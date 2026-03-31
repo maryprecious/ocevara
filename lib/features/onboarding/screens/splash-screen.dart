@@ -25,7 +25,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.initState();
 
     _waveController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 3000));
+        vsync: this, duration: const Duration(milliseconds: 1000));
     _logoController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 2500));
     _textController = AnimationController(
